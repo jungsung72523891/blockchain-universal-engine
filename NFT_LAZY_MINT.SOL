@@ -1,0 +1,32 @@
+pragma solidity ^0.8.19;
+
+contract LazyMintNFT {
+    string public baseURI;
+    address public owner;
+    mapping(uint => address) public creators;
+    uint public tokenId;
+
+    constructor(string memory _baseURI) {
+        owner = msg.sender;
+        baseURI = _baseURI;
+    }
+
+    function lazyMint(address creator) external returns (uint) {
+        tokenId++;
+        creators[tokenId] = creator;
+        return tokenId;
+    }
+
+    function claim(uint id) external {
+        require(creators[id] == msg.sender, "Not creator");
+        creators[id] = address(0);
+    }
+
+    function tokenURI(uint id) public view returns (string memory) {
+        return string(abi.encodePacked(baseURI, uint2str(id)));
+    }
+
+    function uint2str(uint _i) internal pure returns (string memory) {
+        return _i > 0 ? "1" : "0";
+    }
+}
