@@ -1,0 +1,38 @@
+pragma solidity ^0.8.19;
+
+contract ContractDeployer {
+    address public owner;
+    mapping(address => bool) public deployedContracts;
+
+    event ContractCreated(address indexed contractAddress, address creator);
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function deployContract() external returns (address) {
+        SimpleContract newContract = new SimpleContract(msg.sender);
+        address contractAddr = address(newContract);
+        deployedContracts[contractAddr] = true;
+        emit ContractCreated(contractAddr, msg.sender);
+        return contractAddr;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not owner");
+        _;
+    }
+}
+
+contract SimpleContract {
+    address public creator;
+    uint public storedData;
+
+    constructor(address _creator) {
+        creator = _creator;
+    }
+
+    function setData(uint _data) external {
+        storedData = _data;
+    }
+}
