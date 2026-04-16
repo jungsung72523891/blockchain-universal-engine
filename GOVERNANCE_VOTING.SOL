@@ -1,0 +1,44 @@
+pragma solidity ^0.8.19;
+
+contract Governance {
+    struct Proposal {
+        uint id;
+        string title;
+        uint voteFor;
+        uint voteAgainst;
+        bool executed;
+        uint endTime;
+    }
+
+    mapping(uint => Proposal) public proposals;
+    mapping(address => mapping(uint => bool)) public hasVoted;
+    uint public proposalCount;
+
+    event ProposalCreated(uint id, string title);
+    event Voted(uint proposalId, address voter, bool support);
+
+    function createProposal(string calldata title, uint duration) external {
+        proposalCount++;
+        proposals[proposalCount] = Proposal(
+            proposalCount,
+            title,
+            0,
+            0,
+            false,
+            block.timestamp + duration
+        );
+        emit ProposalCreated(proposalCount, title);
+    }
+
+    function vote(uint proposalId, bool support) external {
+        Proposal storage prop = proposals[proposalId];
+        require(block.timestamp < prop.endTime, "Voting ended");
+        require(!hasVoted[msg.sender][proposalId], "Already voted");
+
+        hasVoted[msg.sender][proposalId] = true;
+        if (support) prop.voteFor++;
+        else prop.voteAgainst++;
+
+        emit Voted(proposalId, msg.sender, support);
+    }
+}
