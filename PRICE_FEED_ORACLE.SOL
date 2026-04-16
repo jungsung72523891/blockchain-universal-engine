@@ -1,0 +1,29 @@
+pragma solidity ^0.8.19;
+
+contract PriceOracle {
+    address public owner;
+    mapping(string => uint) public prices;
+    mapping(string => uint) public lastUpdated;
+
+    event PriceUpdated(string symbol, uint price);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not authorized");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function updatePrice(string calldata symbol, uint price) external onlyOwner {
+        prices[symbol] = price;
+        lastUpdated[symbol] = block.timestamp;
+        emit PriceUpdated(symbol, price);
+    }
+
+    function getPrice(string calldata symbol) external view returns (uint) {
+        require(lastUpdated[symbol] + 1 hours >= block.timestamp, "Stale price");
+        return prices[symbol];
+    }
+}
