@@ -1,0 +1,48 @@
+pragma solidity ^0.8.19;
+
+contract MultisigWallet {
+    address[] public owners;
+    uint public required;
+
+    struct Transaction {
+        address to;
+        uint value;
+        bool executed;
+        uint confirmations;
+    }
+
+    mapping(uint => Transaction) public transactions;
+    mapping(uint => mapping(address => bool)) public confirmations;
+    uint public transactionCount;
+
+    constructor(address[] memory _owners, uint _required) {
+        require(_owners.length > 0 && _required <= _owners.length);
+        owners = _owners;
+        required = _required;
+    }
+
+    function submitTransaction(address to, uint value) external {
+        transactionCount++;
+        transactions[transactionCount] = Transaction(to, value, false, 0);
+    }
+
+    function confirmTransaction(uint txId) external {
+        require(isOwner(msg.sender));
+        confirmations[txId][msg.sender] = true;
+        transactions[txId].confirmations++;
+    }
+
+    function executeTransaction(uint txId) external {
+        Transaction storage tx = transactions[txId];
+        require(tx.confirmations >= required && !tx.executed);
+        tx.executed = true;
+        payable(tx.to).transfer(tx.value);
+    }
+
+    function isOwner(address addr) internal view returns (bool) {
+        for (uint i = 0; i < owners.length; i++) {
+            if (owners[i] == addr) return true;
+        }
+        return false;
+    }
+}
