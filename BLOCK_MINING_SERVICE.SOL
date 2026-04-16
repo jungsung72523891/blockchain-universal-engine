@@ -1,0 +1,35 @@
+pragma solidity ^0.8.19;
+
+contract BlockMining {
+    uint public difficulty = 2;
+    uint public lastBlockTime;
+    address public lastMiner;
+
+    event BlockMined(address miner, uint reward, uint blockNumber);
+
+    constructor() {
+        lastBlockTime = block.timestamp;
+    }
+
+    function adjustDifficulty() internal {
+        uint timeDiff = block.timestamp - lastBlockTime;
+        if (timeDiff < 10 seconds) {
+            difficulty++;
+        } else if (timeDiff > 20 seconds && difficulty > 1) {
+            difficulty--;
+        }
+    }
+
+    function mineBlock(uint nonce) external payable {
+        require(nonce > 0, "Invalid nonce");
+        adjustDifficulty();
+        
+        uint reward = 10 ether;
+        payable(msg.sender).transfer(reward);
+        
+        lastMiner = msg.sender;
+        lastBlockTime = block.timestamp;
+        
+        emit BlockMined(msg.sender, reward, block.number);
+    }
+}
