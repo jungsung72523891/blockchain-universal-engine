@@ -1,0 +1,38 @@
+pragma solidity ^0.8.19;
+
+contract LendingPool {
+    struct Loan {
+        address borrower;
+        uint amount;
+        uint collateral;
+        bool active;
+    }
+
+    mapping(address => Loan) public loans;
+    uint public interestRate = 10;
+
+    event LoanTaken(address indexed borrower, uint amount, uint collateral);
+    event LoanRepaid(address indexed borrower);
+
+    function takeLoan(uint amount, uint collateral) external {
+        require(collateral >= (amount * 150) / 100, "Insufficient collateral");
+        require(loans[msg.sender].active == false, "Loan exists");
+
+        loans[msg.sender] = Loan({
+            borrower: msg.sender,
+            amount: amount,
+            collateral: collateral,
+            active: true
+        });
+
+        emit LoanTaken(msg.sender, amount, collateral);
+    }
+
+    function repayLoan() external {
+        Loan storage loan = loans[msg.sender];
+        require(loan.active, "No active loan");
+        
+        loan.active = false;
+        emit LoanRepaid(msg.sender);
+    }
+}
